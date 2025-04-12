@@ -13,7 +13,30 @@ public class PerimeterGoal extends Goal{
 		/*
 		 * ADD YOUR CODE HERE
 		 */
-		return 0;
+		Color[][] grid = board.flatten();
+		int dim = grid.length;
+		int score = 0;
+	
+		// Traverse the outside edge
+		for (int i = 0; i < dim; i++) {
+			for (int j = 0; j < dim; j++) {
+				if (i == 0 || i == dim - 1) {
+					if (grid[i][j].equals(targetGoal)) {
+						score++;
+						if (j == 0 || j == dim - 1) {
+							score++;
+						}
+					}
+				}
+				else if (j == 0 || j == dim - 1) {
+					if (grid[i][j].equals(targetGoal)) {
+						score++;
+					}
+				}
+			}
+		}
+	
+		return score;
 	}
 
 	@Override

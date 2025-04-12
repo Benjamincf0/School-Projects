@@ -299,30 +299,28 @@ public class Block {
   * arr[0][0] is the color of the unit cell in the upper left corner of this Block.
   */
  public Color[][] flatten() {
-  /*
-   * ADD YOUR CODE HERE
-   */
-  int dim = (int) Math.pow(2, maxDepth);
-  Color[][] arr = new Color[dim][dim];
-  getColor(arr);
-  return arr;
- }
+    int dim = (int) Math.pow(2, maxDepth - level);
+    Color[][] arr = new Color[dim][dim];
+    int inc = size / dim;
 
- private void getColor(Color[][] arr) {
-
-  if (color != null) {
-    for (int x = 0; x < size; x++) {
-      for (int y = 0; y < size; y++) {
-        arr[y + yCoord][x + xCoord] = color;
-      }
+    if (this.children.length == 0) {
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                arr[i][j] = this.color;
+            }
+        }
+    } else {
+        for (Block block : children) {
+            Color[][] childColors = block.flatten();
+            int i = (block.yCoord - yCoord) / inc;
+            int j = (block.xCoord - xCoord) / inc;
+            for (Color[] colors : childColors) {
+                System.arraycopy(colors, 0, arr[i], j, colors.length);
+                i++;
+            }
+        }
     }
-    return;
-  }
-
-  for (Block child : children) {
-    child.getColor(arr);
-  }
-
+    return arr;
  }
  
  

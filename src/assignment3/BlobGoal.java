@@ -13,7 +13,21 @@ public class BlobGoal extends Goal{
 		/*
 		 * ADD YOUR CODE HERE
 		 */
-		return 0;
+		Color[][] grid = board.flatten();
+        int n = grid.length;
+        boolean[][] seen = new boolean[n][n];
+        int maxBlob = 0;
+
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                if (!seen[row][col] && grid[row][col].equals(targetGoal)) {
+                    int blobSize = undiscoveredBlobSize(row, col, grid, seen);
+                    maxBlob = Math.max(maxBlob, blobSize);
+                }
+            }
+        }
+
+        return maxBlob;
 	}
 
 	@Override
@@ -27,8 +41,19 @@ public class BlobGoal extends Goal{
 		/*
 		 * ADD YOUR CODE HERE
 		 */
-		return 0;
-
+		if (i < 0 || i >= unitCells.length || j < 0 || j >= unitCells[0].length || visited[i][j] || !unitCells[i][j].equals(targetGoal)) {
+			return 0;
+		}
+	
+		visited[i][j] = true;
+		int size = 1;
+	
+		size += undiscoveredBlobSize(i - 1, j, unitCells, visited); // Up
+		size += undiscoveredBlobSize(i + 1, j, unitCells, visited); // Down
+		size += undiscoveredBlobSize(i, j - 1, unitCells, visited); // Left
+		size += undiscoveredBlobSize(i, j + 1, unitCells, visited); // Right
+	
+		return size;
 	}
 
 }
