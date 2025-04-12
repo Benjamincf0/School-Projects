@@ -9,7 +9,7 @@ public class Block {
  private int yCoord;
  private int size; // height/width of the square
  private int level; // the root (outer most block) is at level 0
- private int maxDepth; 
+ private int maxDepth;
  private Color color;
 
  private Block[] children; // {UR, UL, LL, LR}
@@ -44,6 +44,17 @@ public class Block {
   /*
    * ADD YOUR CODE HERE
    */
+  this.level = lvl;
+  this.maxDepth = maxDepth;
+  if (this.level < this.maxDepth && gen.nextDouble() < Math.exp(-0.25*this.level)) {
+    this.children = new Block[]{new Block(this.level + 1, this.maxDepth), new Block(this.level + 1, this.maxDepth), new Block(this.level + 1, this.maxDepth), new Block(this.level + 1, this.maxDepth)};
+    return;
+  }
+
+  this.children = new Block[0];
+  color = GameColors.BLOCK_COLORS[gen.nextInt(GameColors.BLOCK_COLORS.length)];
+
+  
  }
 
 
@@ -59,7 +70,22 @@ public class Block {
   /*
    * ADD YOUR CODE HERE
    */
- }
+  if (size < 1) {
+    throw new IllegalArgumentException("Invalid size");
+  }
+  this.xCoord = xCoord;
+  this.yCoord = yCoord;
+  this.size = size;
+
+  if (this.children.length != 4 || this.level == this.maxDepth /* not required */ || size % 2 != 0) {
+    return;
+  }
+  this.children[0].updateSizeAndPosition(size/2, xCoord + size/2, yCoord);
+  this.children[1].updateSizeAndPosition(size/2, xCoord, yCoord);
+  this.children[2].updateSizeAndPosition(size/2, xCoord, yCoord + size/2);
+  this.children[3].updateSizeAndPosition(size/2, xCoord + size/2, yCoord + size/2);
+
+}
 
  
  /*
@@ -77,8 +103,26 @@ public class Block {
   /*
    * ADD YOUR CODE HERE
    */
-  return null;
+
+  ArrayList<BlockToDraw> arr = new ArrayList<BlockToDraw>();
+  getPreOrder(this, arr); // recursion base case
+  return arr;
+
  }
+
+ private void getPreOrder(Block block, ArrayList<BlockToDraw> out) {
+  if (block.children.length == 0) {    
+    BlockToDraw block1 = new BlockToDraw(block.color, block.xCoord, block.yCoord, block.size, 0);
+    BlockToDraw block2 = new BlockToDraw(GameColors.FRAME_COLOR, block.xCoord, block.yCoord, block.size, 3);
+    out.add(block1);
+    out.add(block2);
+  }
+
+  for (Block childBlock : block.children) {
+    getPreOrder(childBlock, out); // recursive step
+  }
+ }
+
 
  /*
   * This method is provided and you should NOT modify it. 
@@ -109,7 +153,27 @@ public class Block {
   /*
    * ADD YOUR CODE HERE
    */
-  return null;
+  if (lvl < level || lvl > maxDepth) {
+    throw new IllegalArgumentException("impossible level");
+  }
+
+  if (x < xCoord || x > xCoord + size || y < yCoord || y > yCoord + size) {
+    return null;
+  }
+
+  if (lvl == level || this.children.length < 4) {
+    return this;
+  }
+
+  if (x > xCoord + size/2 && y < yCoord + size/2) {
+    return children[0].getSelectedBlock(x, y, lvl);
+  } else if (x < xCoord + size/2 && y < yCoord + size/2) {
+    return children[1].getSelectedBlock(x, y, lvl);
+  } else if (x < xCoord + size/2 && y > yCoord + size/2) {
+    return children[2].getSelectedBlock(x, y, lvl);
+  } else {
+    return children[3].getSelectedBlock(x, y, lvl);
+  }
  }
 
  
@@ -124,9 +188,28 @@ public class Block {
   * 
   */
  public void reflect(int direction) {
-  /*
-   * ADD YOUR CODE HERE
-   */
+  if (direction != 0 && direction != 1) {
+    throw new IllegalArgumentException("Direction must be either 0 or 1");
+  }
+
+  if (children.length == 0) {
+    return;
+  }
+
+  int d = direction;
+  Block temp1 = children[d];
+  Block temp2 = children[1+d];
+  children[d] = children[(3+d)%4];
+  children[1+d] = children[2+d];
+  children[2+d] = temp2;
+  children[(3+d)%4] = temp1;
+
+  updateSizeAndPosition(this.size, this.xCoord, this.yCoord);
+
+  // Reflect recursively
+  for (Block block : children) {
+    block.reflect(direction);
+  }
  }
  
 
@@ -140,6 +223,39 @@ public class Block {
   /*
    * ADD YOUR CODE HERE
    */
+  if (direction != 0 && direction != 1) {
+    throw new IllegalArgumentException("Direction must be either 0 or 1");
+  }
+
+  if (children.length == 0) {
+    return;
+  }
+
+  int d = 2*direction - 1;
+  Block temp = children[0];
+
+  for (int i = 0; i < children.length - 1; i++) {
+    children[(((i*d) % 4) + 4) % 4] = children[(((i*d + d) % 4) + 4) % 4];
+  }
+  children[d+2] = temp;
+
+  //clockwise: direction = 1
+  // children[0] = children[1];
+  // children[1] = children[2];
+  // children[2] = children[3];
+  // children[3] = temp;
+
+  //counter-clockwise: direction = 0
+  // children[0] = children[3];
+  // children[3] = children[2];
+  // children[2] = children[1];
+  // children[1] = temp;
+
+  updateSizeAndPosition(size, this.xCoord, this.yCoord);
+
+  for (Block block : children) {
+    block.rotate(direction);
+  }
  }
  
 
@@ -162,7 +278,15 @@ public class Block {
   /*
    * ADD YOUR CODE HERE
    */
-  return false;
+  if (level == 0 || level == maxDepth) {
+    return false;
+  }
+
+  children = new Block[]{new Block(level + 1, maxDepth), new Block(level + 1, maxDepth), new Block(level + 1, maxDepth), new Block(level + 1, maxDepth)};
+
+  updateSizeAndPosition(size, xCoord, yCoord);
+
+  return true;
  }
  
  
@@ -178,9 +302,28 @@ public class Block {
   /*
    * ADD YOUR CODE HERE
    */
-  return null;
+  int dim = (int) Math.pow(2, maxDepth);
+  Color[][] arr = new Color[dim][dim];
+  getColor(arr);
+  return arr;
  }
 
+ private void getColor(Color[][] arr) {
+
+  if (color != null) {
+    for (int x = 0; x < size; x++) {
+      for (int y = 0; y < size; y++) {
+        arr[y + yCoord][x + xCoord] = color;
+      }
+    }
+    return;
+  }
+
+  for (Block child : children) {
+    child.getColor(arr);
+  }
+
+ }
  
  
  // These two get methods have been provided. Do NOT modify them. 
@@ -243,6 +386,42 @@ public class Block {
    }
    System.out.println();
   }
+ }
+ 
+ public static void main(String[] args) {
+  // Block block21 = new Block(12, 8, 4, 2, 2, GameColors.BLUE, new Block[0]);
+  // Block block22 = new Block(8, 8, 4, 2, 2, GameColors.RED, new Block[0]);
+  // Block block23 = new Block(8, 12, 4, 2, 2, GameColors.YELLOW, new Block[0]);
+  // Block block24 = new Block(12, 12, 4, 2, 2, GameColors.BLUE, new Block[0]);
+
+  // Block block11 = new Block(8, 0, 8, 1, 2, GameColors.GREEN, new Block[0]);
+  // Block block12 = new Block(0, 0, 8, 1, 2, GameColors.RED, new Block[0]);
+  // Block block13 = new Block(0, 8, 8, 1, 2, GameColors.YELLOW, new Block[0]);
+  // Block block14 = new Block(8, 8, 8, 1, 2, null, new Block[]{block21, block22, block23, block24});
+
+  // Block block01 = new Block(0, 0, 16, 0, 3, null, new Block[]{block11, block12, block13, block14});
+  // block01.printBlock();
+
+
+  System.out.println("*********************************************************************");
+  gen.setSeed(2);
+  // Block blockDepth2 = new Block(0, 2);
+  // blockDepth2.printBlock();
+
+  // Block blockDepth2 = new Block(0,2);
+  // blockDepth2.updateSizeAndPosition(16, 0, 0);
+  // blockDepth2.printBlock();
+
+
+  // Block blockDepth3 = new Block(0,3);
+  // blockDepth3.updateSizeAndPosition(16, 0, 0);
+  // Block b1 = blockDepth3.getSelectedBlock(3, 5, 2);
+  // b1.printBlock();
+
+  Block blockDepth0 = new Block(0, 2);
+  blockDepth0.updateSizeAndPosition(4, 0, 0);
+  System.out.println(blockDepth0.size);
+  blockDepth0.printColoredBlock();
  }
  
 }
