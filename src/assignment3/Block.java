@@ -70,7 +70,7 @@ public class Block {
   /*
    * ADD YOUR CODE HERE
    */
-  if (size < 1) {
+  if (size < 1 || size%Math.pow(2, maxDepth - level) != 0) {
     throw new IllegalArgumentException("Invalid size");
   }
   this.xCoord = xCoord;
@@ -150,30 +150,25 @@ public class Block {
   * - if (x,y) is not within this Block, return null.
   */
  public Block getSelectedBlock(int x, int y, int lvl) {
-  /*
-   * ADD YOUR CODE HERE
-   */
-  if (lvl < level || lvl > maxDepth) {
-    throw new IllegalArgumentException("impossible level");
-  }
+    if (lvl > maxDepth || lvl < this.level) {
+        throw new IllegalArgumentException("invalid lvl search");
+    }
 
-  if (x < xCoord || x > xCoord + size || y < yCoord || y > yCoord + size) {
+    if (x < xCoord || x >= xCoord + size || y < yCoord || y >= yCoord + size) {
+        return null;
+    }
+
+    if (lvl == this.level) {
+        return this;
+    }
+
+    for (Block block : this.children) {
+        if (block != null && block.xCoord <= x && x < block.xCoord + block.size && block.yCoord <= y && y < block.yCoord + block.size) {
+            return block.getSelectedBlock(x, y, lvl);
+        }
+    }
+
     return null;
-  }
-
-  if (lvl == level || this.children.length < 4) {
-    return this;
-  }
-
-  if (x > xCoord + size/2 && y < yCoord + size/2) {
-    return children[0].getSelectedBlock(x, y, lvl);
-  } else if (x < xCoord + size/2 && y < yCoord + size/2) {
-    return children[1].getSelectedBlock(x, y, lvl);
-  } else if (x < xCoord + size/2 && y > yCoord + size/2) {
-    return children[2].getSelectedBlock(x, y, lvl);
-  } else {
-    return children[3].getSelectedBlock(x, y, lvl);
-  }
  }
 
  
@@ -235,17 +230,17 @@ public class Block {
   Block temp = children[0];
 
   for (int i = 0; i < children.length - 1; i++) {
-    children[(((i*d) % 4) + 4) % 4] = children[(((i*d + d) % 4) + 4) % 4];
+    children[(i*d + 4) % 4] = children[(i*d + d + 4) % 4];
   }
   children[d+2] = temp;
 
-  //clockwise: direction = 1
+  // clockwise: direction = 1
   // children[0] = children[1];
   // children[1] = children[2];
   // children[2] = children[3];
   // children[3] = temp;
 
-  //counter-clockwise: direction = 0
+  // counter-clockwise: direction = 0
   // children[0] = children[3];
   // children[3] = children[2];
   // children[2] = children[1];
@@ -384,42 +379,6 @@ public class Block {
    }
    System.out.println();
   }
- }
- 
- public static void main(String[] args) {
-  // Block block21 = new Block(12, 8, 4, 2, 2, GameColors.BLUE, new Block[0]);
-  // Block block22 = new Block(8, 8, 4, 2, 2, GameColors.RED, new Block[0]);
-  // Block block23 = new Block(8, 12, 4, 2, 2, GameColors.YELLOW, new Block[0]);
-  // Block block24 = new Block(12, 12, 4, 2, 2, GameColors.BLUE, new Block[0]);
-
-  // Block block11 = new Block(8, 0, 8, 1, 2, GameColors.GREEN, new Block[0]);
-  // Block block12 = new Block(0, 0, 8, 1, 2, GameColors.RED, new Block[0]);
-  // Block block13 = new Block(0, 8, 8, 1, 2, GameColors.YELLOW, new Block[0]);
-  // Block block14 = new Block(8, 8, 8, 1, 2, null, new Block[]{block21, block22, block23, block24});
-
-  // Block block01 = new Block(0, 0, 16, 0, 3, null, new Block[]{block11, block12, block13, block14});
-  // block01.printBlock();
-
-
-  System.out.println("*********************************************************************");
-  gen.setSeed(2);
-  // Block blockDepth2 = new Block(0, 2);
-  // blockDepth2.printBlock();
-
-  // Block blockDepth2 = new Block(0,2);
-  // blockDepth2.updateSizeAndPosition(16, 0, 0);
-  // blockDepth2.printBlock();
-
-
-  // Block blockDepth3 = new Block(0,3);
-  // blockDepth3.updateSizeAndPosition(16, 0, 0);
-  // Block b1 = blockDepth3.getSelectedBlock(3, 5, 2);
-  // b1.printBlock();
-
-  Block blockDepth0 = new Block(0, 2);
-  blockDepth0.updateSizeAndPosition(4, 0, 0);
-  System.out.println(blockDepth0.size);
-  blockDepth0.printColoredBlock();
  }
  
 }
